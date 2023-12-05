@@ -1,0 +1,97 @@
+
+#workarea {
+    overflow-x: hidden!important;
+}
+
+#workarea-content {
+    overflow: unset !important;
+}
+
+.workarea-content-paddings{
+    overflow-x: unset !important;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: content-box;
+}
+
+#app ::selection {
+    background: #cfcfcf;
+}
+
+.b2b{
+
+    &-app-container{}
+
+    &-invalid {
+        border:solid 1px !important;
+        border-color: #ff2400 !important;
+    }
+
+    &-small{
+        color: #ff2400;
+    }
+
+    &-row{}
+
+    &-title{
+        font-weight: 500;
+        &_h1{
+            color: #EF7C00;
+            font-size: 36px;
+            line-height: 38px;
+        }
+        &_h2{
+            color: #383838;
+            font-size: 25px;
+            line-height: 28.73px;
+        }
+        &_h3{
+            color: #383838;
+            font-size: 20px;
+            line-height: 20px;
+        }
+        &_h4{
+            display: inline;
+            color: #383838;
+            font-size: 15px;
+            line-height: 20px;
+        }
+        &_ml-20{
+            margin-left: 20px;
+        }
+    }
+
+    &-label{
+        display: block;
+        font-weight: 500;
+    }
+
+}
+
+.el-dialog__body{
+    padding: 0 10px !important;
+}
+
+.el-table .cell{
+    word-break: break-word!important;
+    padding: 0 5px;
+}
+
+.el-tabs--border-card>.el-tabs__header .el-tabs__item.is-active {
+    color: #EF7C00!important;
+}
+
+.el-tabs--border-card>.el-tabs__header .el-tabs__item:not(.is-disabled):hover {
+    color: #EF7C00!important;
+}
+
+.el-scrollbar__bar.is-vertical>div{
+    background-color: #ff8400!important;
+}
+
+.el-scrollbar__bar.is-horizontal>div{
+    background-color: #ff8400!important;
+}

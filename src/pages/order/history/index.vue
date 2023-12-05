@@ -1,15 +1,13 @@
 <template>
-  <div v-loading = "loading"
-       element-loading-text="Загрузка данных..."
-       :element-loading-spinner="svg"
-       element-loading-svg-view-box="-10, -10, 50, 50"
-       class="route_page_container"
+  <pre-loader
+      class="b2b-history"
+      :loading="loading"
   >
-    <h1 class="main-h1">История ваших заказов</h1>
+    <h1 class="b2b-history__title b2b-title b2b-title_h1"> История ваших заказов </h1>
     <el-table
         :data="history_data"
         :default-sort="{ prop: 'id', order: 'descending' }"
-        style="width: 100%;"
+        class="b2b-history__table"
         border
         max-height="500"
         stripe
@@ -26,53 +24,68 @@
       <el-table-column prop="status" label="Статус заказа" width="140" sortable/>
       <el-table-column prop="date_create" label="Дата заказа" width="140" sortable/>
     </el-table>
-  </div>
+  </pre-loader>
 </template>
 
-<script>
+<script setup>
 import {inject, ref, reactive, watchEffect, watch} from 'vue'
+import PreLoader from "@/components/pre_loader";
+import { useRouter, useRoute } from 'vue-router';
+import {OrderRepo} from "@/repositories";
 
-export default {
-  name: "order_history_page",
-  setup(){
-    const loadJson        = inject('loadJson');
-    const svg             = inject('svg');
-    const notify          = inject('notify');
-    const client          = inject('client');
-    const formatNumber    = inject('formatNumber');
+const notify          = inject('notify');
+const client          = inject('client');
+const formatNumber    = inject('formatNumber');
 
-    const loading         = ref(false);
-    const history_data    = reactive([]);
+const router          = useRouter();
 
+const loading         = ref(false);
+const history_data    = reactive([]);
 
-    async function getData(){
-      loading.value = true;
-      let result = await loadJson('/b2b/order/history', {client_id: client.id, client_guid : client.guid});
-      loading.value = false;
-      if (result.status === 'success' && result.data) {
-        history_data.length = 0;
-        result.data.forEach(el => history_data.push(el));
-      }
+async function getData(){
+  try {
+    loading.value = true;
+    let result = await OrderRepo.history({client_id: client.id, client_guid : client.guid});
+
+    if(result.status == 200 && result.body.data) {
+      history_data.length = 0;
+      result.body.data.forEach(el => history_data.push(el));
+    } else {
+      await router.push({name : 'login'})
     }
+  } catch (e) {
+    notify({ title: 'Ошибка получение информации об истории заказов', message: e.message, type: 'error', duration: 5000 });
+  } finally {
+    loading.value = false;
+  }
+}
 
-    watch([
-          () => client.update_date.history,
-        ],
-        (values, oldValues) => {
-          if (values[0] !== oldValues[0]) getData();
-        }
-    );
+watch([
+      () => client.update_date.history,
+    ],
+    (values, oldValues) => {
+      if (values[0] !== oldValues[0]) getData();
+    }
+);
 
-    watchEffect(() => {
-      client.id  ? getData() : '';
-    });
-    return {
-      svg, loading, history_data, formatNumber,
+watchEffect(() => {
+  client.id  ? getData() : '';
+});
+
+
+
+</script>
+
+<style scoped lang="scss">
+
+.b2b {
+  &-history {
+    &__table {
+      width: 100%;
+    }
+    &__title {
+      padding-bottom: 25px;
     }
   }
 }
-</script>
-
-<style scoped>
-
 </style>

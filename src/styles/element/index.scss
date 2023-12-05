@@ -1,0 +1,63 @@
+@forward 'element-plus/theme-chalk/src/common/var.scss' with (
+  $colors: (
+    'white': #ffffff,
+    'black': #000000,
+    'primary': (
+      'base': #EF7C00,
+    ),
+    //'success': (
+    //  'base': #3bc8f5,
+    //),
+    //'warning': (
+    //  'base': #e6a23c,
+    //),
+    //'danger': (
+    //  'base': #f56c6c,
+    //),
+    //'error': (
+    //  'base': #f56c6c,
+    //),
+    //'info': (
+    //  'base': #3bc8f5,
+    //),
+  ),
+  $breakpoints: (
+  'xs': '(max-width: #{'639.99px'})',
+  'sm': '(min-width: #{'640px'})',
+  'md': '(min-width: #{'768px'})',
+  'lg': '(min-width: #{'1024px'})',
+  'xl': '(min-width: #{'1280px'})',
+  '2xl': '(min-width: #{'1536px'})',
+  ),
+  //$border-radius: (
+  //  'base': 6px
+  //),
+  //$font-family: (
+  //  '':
+  //    "'Stolzlregular'"
+  //),
+  //$button-padding-horizontal: (
+  //  'default':''
+  //),
+  //$input-height: (
+  //  'default': ''
+  //),
+  //$input-line-height: (
+  //  'default': 3.4em
+  //),
+  //$common-component-size: (
+  //  'large':48px
+  //),
+  //$card: (
+  //  'border-radius':20px
+  //),
+  //$radio-bordered-input-width: (
+  //  'large':24px
+  //),
+  //$radio-bordered-input-height: (
+  //  'large':24px
+  //)
+
+);
+
+@use "element-plus/theme-chalk/src/index.scss" as *;

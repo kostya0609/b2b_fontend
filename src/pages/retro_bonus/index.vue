@@ -1,21 +1,21 @@
 <template>
-  <div
-      v-loading = "loading"
-      element-loading-text="Загрузка данных..."
-      :element-loading-spinner="svg"
-      element-loading-svg-view-box="-10, -10, 50, 50"
-      class="route_page_container"
+  <pre-loader
+      class="b2b-retro-bonus"
+      :loading="loading"
   >
-    <h1 class="main-h1">Ретробонусы {{year}} год.</h1>
-    <p>Информация актуальны по состоянию на {{client.update_date.retro_bonus.format('DD.MM.YYYY, HH:mm')}}</p>
+    <h1 class="b2b-retro-bonus__title b2b-title b2b-title_h1"> Ретробонусы {{year}} год. </h1>
+
+    <label class="b2b-retro-bonus__label b2b-label">
+      Информация актуальны по состоянию на {{client.update_date.retro_bonus.format('DD.MM.YYYY, HH:mm')}}
+    </label>
 
     <div v-if="!client.waiting.retro_bonus && retro_bonus_data.length > 0">
 
-      <el-row >
-        <el-col :span="7">
+      <el-row class="b2b-row b2b-retro-bonus__row">
+        <el-col :md="8">
           <el-select
               v-model="select_company"
-              :class="['add-edit-element']"
+              class="b2b-retro-bonus__select-field"
               @change="changeSelectCompany"
               placeholder="Выберете организацию"
               size="large"
@@ -30,14 +30,14 @@
           </el-select>
         </el-col>
       </el-row>
-      <br/>
 
-      <el-row >
-        <el-col :span="7">
+      <el-row
+          v-if="!is_retail"
+          class="b2b-row b2b-retro-bonus__row">
+        <el-col :md="8">
           <el-select
-              v-if="!is_retail"
               v-model="select_month"
-              :class="['add-edit-element']"
+              class="b2b-retro-bonus__select-field"
               placeholder="Выберете месяц"
               size="large"
           >
@@ -51,280 +51,130 @@
           </el-select>
         </el-col>
       </el-row>
-      <br/>
 
-      <div v-if="is_retail">
-        <el-table
-            :data="retro_bonus_data[select_company].calculate"
-            style="width: 100%;"
-            border
-            max-height="500"
-            stripe
-            show-summary
-            :summary-method="(params) => getSummaries(params, 'personal')"
-            sum-text="Итого"
-            scrollbar-always-on
-        >
-          <el-table-column prop="group" label="Номенклатурная группа"/>
-          <el-table-column prop="plan" label="Согласованный план, руб." width="180">
-            <template #default="scope">
-            <span>
-              {{formatNumber(scope.row.plan)}}
-            </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="fact" label="Факт на текущий момент, руб." width="180">
-            <template #default="scope">
-            <span>
-              {{formatNumber(scope.row.fact)}}
-            </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="remainder" label="Остаток плана до выполнения ретробонусов, руб." width="280">
-            <template #default="scope">
-            <span>
-              <span v-if="(scope.row.fact - scope.row.plan) > 0"> План перевыполнен на  - </span>{{(scope.row.plan - scope.row.fact) > 0  ? formatNumber(scope.row.plan - scope.row.fact) : formatNumber(-(scope.row.plan - scope.row.fact))}}
-            </span>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+      <retail
+          v-if="is_retail"
+          :table_data="retro_bonus_data[select_company].calculate"
+      />
 
-      <div v-else>
-        <p class="" style="margin-bottom: 15px; font-size: 20px; color: #EF7C00;">
-          Ретробонус за {{month_list.find(el => {return el.value == select_month}).label}} месяц <span class="orange_bold">{{retro_bonus_data[select_company].months[select_month].is_paid ? 'выплачен' : 'не выплачен'}}</span>.
-        </p>
-        <el-tabs v-model="activeTab" type="border-card" style="margin-bottom: 15px">
-          <el-tab-pane label="Данные для расчета" name="dataCalculate">
-            <el-table
-                :data="retro_bonus_data[select_company].months[select_month].dataCalculate"
-                style="width: 100%;"
-                border
-                max-height="500"
-                stripe
-                show-summary
-                :summary-method="(params) => getSummaries(params, 'dataCalculate')"
-                sum-text="Итого"
-                scrollbar-always-on
-            >
-              <el-table-column prop="group" label="Номенклатурная группа"/>
-              <el-table-column prop="plan" label="План, руб." width="110">
-                <template #default="scope">
-                <span>
-                  {{formatNumber(scope.row.plan)}}
-                </span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="fact" label="Факт, руб." width="110">
-                <template #default="scope">
-                <span>
-                  {{formatNumber(scope.row.fact)}}
-                </span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="planAccum" label="План накоп., руб." width="110">
-                <template #default="scope">
-                <span>
-                  {{formatNumber(scope.row.planAccum)}}
-                </span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="factAccum" label="Факт накоп., руб." width="110">
-                <template #default="scope">
-                <span>
-                  {{formatNumber(scope.row.factAccum)}}
-                </span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="planCompleted" label="Выполнение плана мес." width="110">
-                <template #default="scope">
-                <span :class="['green_bold', {'red_bold' : !scope.row.planCompleted}]">
-                  {{scope.row.planCompleted ? 'Да' : 'Нет'}}
-                </span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="planAccumCompleted" label="Выполнение плана накоп." width="110">
-                <template #default="scope">
-                <span :class="['green_bold', {'red_bold' : !scope.row.planCompleted}]">
-                  {{scope.row.planAccumCompleted ? 'Да' : 'Нет'}}
-                </span>
-                </template>
-              </el-table-column>
-            </el-table>
-          </el-tab-pane>
-          <el-tab-pane label="Расчет ретробонуса" name="calculate">
-            <el-table
-                :data="retro_bonus_data[select_company].months[select_month].calculate"
-                style="width: 100%;"
-                border
-                max-height="500"
-                stripe
-                show-summary
-                :summary-method="(params) => getSummaries(params, 'calculate')"
-                sum-text="Итого"
-                scrollbar-always-on
-            >
-              <el-table-column prop="group" label="Номенклатурная группа"/>
-              <el-table-column prop="basePeriod" label="База для ретробонуса (за период), руб." width="130">
-                <template #default="scope">
-                <span>
-                  {{formatNumber(scope.row.basePeriod)}}
-                </span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="baseAccum" label="База для ретробонуса (накоп.), руб." width="130">
-                <template #default="scope">
-                <span>
-                  {{formatNumber(scope.row.baseAccum)}}
-                </span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="percent" label="Основной процент" width="100">
-                <template #default="scope">
-                <span>
-                  {{scope.row.percent}}
-                </span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="additionalPercent" label="Дополнит. процент" width="100">
-                <template #default="scope">
-                <span>
-                  {{scope.row.additionalPercent}}
-                </span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="retroBonus" label="Ретробонус, руб." width="115">
-                <template #default="scope">
-                <span>
-                  {{formatNumber(scope.row.retroBonus)}}
-                </span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="retroBonusAccum" label="Ретробонус (накоп.), руб." width="115">
-                <template #default="scope">
-                <span>
-                  {{formatNumber(scope.row.retroBonusAccum)}}
-                </span>
-                </template>
-              </el-table-column>
-            </el-table>
-          </el-tab-pane>
-        </el-tabs>
-      </div>
+      <wholesale
+          v-else
+          :table_dataCalculate="retro_bonus_data[select_company].months[select_month].dataCalculate"
+          :table_calculate="retro_bonus_data[select_company].months[select_month].calculate"
+          :is_paid="retro_bonus_data[select_company].months[select_month].is_paid"
+          :select_month="month_list.find(el => {return el.value == select_month}).label"
+      />
+
     </div>
 
-  </div>
+  </pre-loader>
 </template>
 
-<script>
-import {inject, ref, reactive, watchEffect} from 'vue'
+<script setup>
+import {inject, ref, reactive, watchEffect, provide} from 'vue'
 import { useRouter, useRoute } from 'vue-router';
+import PreLoader from "@/components/pre_loader";
+import Retail from "@/pages/retro_bonus/components/retail.vue"
+import Wholesale from "@/pages/retro_bonus/components/wholesale.vue"
 import moment from "moment";
-export default {
-  name: "retro_bonus_page",
-  setup(){
-    const loadJson          = inject('loadJson');
-    const svg               = inject('svg');
-    const notify            = inject('notify');
-    const client            = inject('client');
-    const menu              = inject('menu');
+import {RetroBonusRepo} from "@/repositories";
 
-    const router           = useRouter();
-    const route            = useRoute();
+const notify            = inject('notify');
+const client            = inject('client');
+const menu              = inject('menu');
 
-    let date                = new Date;
-    let year                = date.getMonth() > 0 ?  date.getFullYear() : date.getFullYear() - 1;
+const router            = useRouter();
 
-    const retro_bonus_list  = reactive([]);
-    const retro_bonus_data  = reactive([]);
-    const is_retail         = ref(true);
+let date                = new Date;
+let year                = date.getMonth() > 0 ?  date.getFullYear() : date.getFullYear() - 1;
 
-    const formatNumber      = inject('formatNumber');
+const retro_bonus_list  = reactive([]);
+const retro_bonus_data  = reactive([]);
+const is_retail         = ref(true);
 
-    const loading           = ref(false);
+const formatNumber      = inject('formatNumber');
 
-    const activeTab         = ref('dataCalculate');
+const loading           = ref(false);
 
-    const select_company    = ref(0);
-    const select_month      = ref('month_' + (+date.getMonth() + 1));
-    const month_list        = reactive([
-      {value : 'month_1' , label : 'Январь'},
-      {value : 'month_2' , label : 'Февраль'},
-      {value : 'month_3' , label : 'Март'},
-      {value : 'month_4' , label : 'Апрель'},
-      {value : 'month_5' , label : 'Май'},
-      {value : 'month_6' , label : 'Июнь'},
-      {value : 'month_7' , label : 'Июль'},
-      {value : 'month_8' , label : 'Август'},
-      {value : 'month_9' , label : 'Сентябрь'},
-      {value : 'month_10', label : 'Октябрь'},
-      {value : 'month_11', label : 'Ноябрь'},
-      {value : 'month_12', label : 'Декабрь'},
-    ]);
+const select_company    = ref(0);
+const select_month      = ref('month_' + (+date.getMonth() + 1));
+const month_list        = reactive([
+  {value : 'month_1' , label : 'Январь'},
+  {value : 'month_2' , label : 'Февраль'},
+  {value : 'month_3' , label : 'Март'},
+  {value : 'month_4' , label : 'Апрель'},
+  {value : 'month_5' , label : 'Май'},
+  {value : 'month_6' , label : 'Июнь'},
+  {value : 'month_7' , label : 'Июль'},
+  {value : 'month_8' , label : 'Август'},
+  {value : 'month_9' , label : 'Сентябрь'},
+  {value : 'month_10', label : 'Октябрь'},
+  {value : 'month_11', label : 'Ноябрь'},
+  {value : 'month_12', label : 'Декабрь'},
+]);
 
-    function changeSelectCompany(value){
-      select_month.value = 'month_' + (+date.getMonth() + 1);
-      is_retail.value    = retro_bonus_list[value].is_retail;
-    };
+function changeSelectCompany(value){
+  select_month.value = 'month_' + (+date.getMonth() + 1);
+  is_retail.value    = retro_bonus_list[value].is_retail;
+};
 
-    function getSummaries(param, type) {
+function getSummaries(param, type) {
 
-      let need_properties = []
-      if (type === 'dataCalculate') need_properties = ['plan', 'fact', 'planAccum', 'factAccum'];
+  let need_properties = []
+  if (type === 'dataCalculate') need_properties = ['plan', 'fact', 'planAccum', 'factAccum'];
 
-      if (type === 'calculate')     need_properties = ['basePeriod', 'baseAccum', 'retroBonus', 'retroBonusAccum'];
+  if (type === 'calculate')     need_properties = ['basePeriod', 'baseAccum', 'retroBonus', 'retroBonusAccum'];
 
-      if (type === 'personal')      need_properties = ['plan', 'fact'];
+  if (type === 'personal')      need_properties = ['plan', 'fact'];
 
-      const { columns, data } = param;
-      const sums = [];
+  const { columns, data } = param;
+  const sums = [];
 
-      columns.forEach((column, index) => {
-        if (index === 0) {
-          sums[index] = 'Итого';
-          return;
-        }
+  columns.forEach((column, index) => {
+    if (index === 0) {
+      sums[index] = 'Итого';
+      return;
+    }
 
-        let sum = 0, error = '';
+    let sum = 0, error = '';
 
-        if (need_properties.includes(column.property)){
-          data.forEach(item => {
-            if (!isNaN(+item[column.property])) sum += +item[column.property];
-            else {error = 'Не число'; return};
-          });
-
-          if (!error) sums[index] = formatNumber(sum.toFixed(2));
-          else sums[index] = error;
-        }
-
+    if (need_properties.includes(column.property)){
+      data.forEach(item => {
+        if (!isNaN(+item[column.property])) sum += +item[column.property];
+        else {error = 'Не число'; return};
       });
-      return sums;
-    };
 
-    async function getData(){
+      if (!error) sums[index] = formatNumber(sum.toFixed(2));
+      else sums[index] = error;
+    }
+
+  });
+  return sums;
+};
+
+async function getData(){
+  retro_bonus_data.length = 0;
+  retro_bonus_list.length = 0;
+
+  let needUpdate = moment().diff(client.update_date.retro_bonus, 'minutes') >= client.update_interval.retro_bonus ;
+
+  if (!client.waiting.retro_bonus && !needUpdate) {
+
+    try {
       loading.value = true;
+      let retro_bonus =await RetroBonusRepo.get({client_id: client.id});
 
-      retro_bonus_data.length = 0;
-      retro_bonus_list.length = 0;
+      if(retro_bonus.status == 200 && retro_bonus.body.data) {
 
-      let needUpdate = moment().diff(client.update_date.retro_bonus, 'minutes') >= client.update_interval.retro_bonus ? true : false;
-
-      if (!client.waiting.retro_bonus && !needUpdate) {
-
-        let retro_bonus = await loadJson('/b2b/retro-bonus/get', {client_id: client.id});
-
-        if (retro_bonus.status === 'success' && retro_bonus.data) {
-
-          if(retro_bonus.data.length === 0){
-            menu.find(el => {return el.name === 'Ретробонусы'}).show = false;
-            router.push({name : 'client'})
-            notify('Получение информации о ретробонусах', 'Ошибка получения информации о ретробонусах', 'error');
-            return;
+          if(retro_bonus.body.data.length === 0){
+              menu.find(el => {return el.name === 'Ретробонусы'}).show = false;
+              await router.push({name : 'client'})
+              notify({ title: 'Ошибка получение информации о ретробонусах', message: '', type: 'error', duration: 5000 });
+              return;
           }
 
-          is_retail.value = retro_bonus.data[0].is_retail ? true : false;
-
-          retro_bonus.data.forEach((el, idx) => {
+          is_retail.value = !!retro_bonus.body.data[0].is_retail;
+          retro_bonus.body.data.forEach((el, idx) => {
             retro_bonus_data.push(el);
             retro_bonus_list.push({
               value     : idx,
@@ -332,32 +182,52 @@ export default {
               is_retail : el.is_retail,
             })
           });
-        }
 
       } else {
-        if(!client.waiting.retro_bonus && needUpdate){
-          client.waiting.retro_bonus = true;
-          loadJson('/b2b/retro-bonus/update', {guid: client.guid, client_id : client.id, date : year + '0101'});
-          notify('Получение информации о ретробонусах', 'Информация о ретробонусах обновляется, может потребоваться некоторое время.', 'success');
-        }
-      };
-
+          await router.push({name : 'login'})
+      }
+    } catch (e) {
+      notify({ title: 'Ошибка получение информации о ретробонусах', message: e.message, type: 'error', duration: 5000 });
+    } finally {
       loading.value = false;
-    };
-
-    watchEffect(() => {
-      client.id && client.waiting.retro_bonus === false ? getData() : '';
-    });
-
-    return{
-      svg, loading, year, select_month, month_list, activeTab, is_retail, retro_bonus_data,
-      formatNumber, client, retro_bonus_list, select_company,
-      getSummaries, changeSelectCompany
     }
-  },
-}
+
+  } else {
+
+    if(!client.waiting.retro_bonus && needUpdate){
+      client.waiting.retro_bonus = true;
+      RetroBonusRepo.update({guid: client.guid, client_id : client.id, date : year + '0101'}); // тут уходит дата год на первое января
+      notify({ title: 'Получение информации о ретробонусахх', message: 'Информация о ретробонусах обновляется, может потребоваться некоторое время.', type: 'success'});
+    }
+  };
+
+};
+
+watchEffect(() => {
+  client.id && client.waiting.retro_bonus === false ? getData() : '';
+});
+
+provide('getSummaries', getSummaries);
+
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+
+.b2b{
+  &-retro-bonus{
+    &__row{
+      margin-bottom: 20px;
+    }
+    &__title{
+      padding-bottom: 25px;
+    }
+    &__select-field{
+      width: 100%;
+    }
+    &__label{
+      margin-bottom: 20px;
+    }
+  }
+}
 
 </style>

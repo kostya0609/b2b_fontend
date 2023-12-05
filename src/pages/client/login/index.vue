@@ -1,147 +1,186 @@
 <template>
-  <div
-      v-loading="loading"
-      element-loading-text="Загрузка данных..."
-      :element-loading-spinner="svg"
-      element-loading-svg-view-box="-10, -10, 50, 50"
-      class="route_page_container"
+  <pre-loader
+      class="b2b-login"
+      :loading="loading"
   >
-    <h1 class="main-h1">Авторизация в личном кабинете</h1>
-    <el-row style="margin-bottom: 20px">
-      <el-col :span="12">
-        <label class="add-edit-label">
-          E-MAIL
-        </label>
+    <h1 class="b2b-login__title b2b-title b2b-title_h1"> Авторизация в личном кабинете </h1>
+    <el-row class="b2b-row b2b-login__row">
+      <el-col :md="12">
+        <label class="b2b-login__label b2b-label"> E-MAIL </label>
         <el-input
             v-model="loginData.email"
-            :class="['add-edit-element', {'invalid' : errors.email}]"
+            :class="{'b2b-invalid' : errors.email}"
             placeholder="E-MAIL"
         >
         </el-input>
-        <small v-if="errors.email">{{errors.email}}</small>
+        <small
+            v-if="errors.email"
+            class="b2b-small"
+        >
+          {{errors.email}}
+        </small>
       </el-col>
     </el-row>
-    <el-row style="margin-bottom: 20px">
-      <el-col :span="12">
-        <label class="add-edit-label">
-          Пароль
-        </label>
+    <el-row class="b2b-row b2b-login__row">
+      <el-col :md="12">
+        <label class="b2b-login__label b2b-label"> Пароль </label>
         <el-input
             v-model="loginData.password"
             type="password"
-            :class="['add-edit-element', {'invalid' : errors.password}]"
+            :class="{'b2b-invalid' : errors.password}"
             v-on:keyup.enter="toLogin"
             placeholder="Пароль"
         >
         </el-input>
-        <small v-if="errors.password">{{errors.password}}</small>
+        <small
+            v-if="errors.password"
+            class="b2b-small"
+        >
+          {{errors.password}}
+        </small>
       </el-col>
     </el-row>
-    <el-row>
-      <el-col :span="12">
+    <el-row class="b2b-row">
+      <el-col :md="12">
         <el-button
             type="primary"
             @click="toLogin"
-            style="width: 50%; background: #EF7C00; border-color: #EF7C00; color: white"
+            class="b2b-login__button"
         >
           Войти
         </el-button>
       </el-col>
     </el-row>
-  </div>
-</template>
 
-<script>
+  </pre-loader>
+ </template>
+
+<script setup>
 import { useRouter, useRoute} from 'vue-router';
 import {ref, reactive, inject, watchEffect, provide} from "vue";
+import { useCookies } from '@vueuse/integrations/useCookies'
+import PreLoader from "@/components/pre_loader";
 import moment from "moment";
-export default {
-  name: "login_page",
-  setup(){
-    const router            = useRouter();
-    const route             = useRoute();
-    const myStorage         = window.localStorage;
-    const loadJson          = inject('loadJson');
-    const svg               = inject('svg');
-    const client            = inject('client');
-    const notify            = inject('notify');
+import {ClientRepo} from "@/repositories"
 
-    const updateData        = inject('updateData');
+const router            = useRouter();
+const route             = useRoute();
+const myStorage         = window.localStorage;
 
-    const loading   = ref(false);
-    const loginData = reactive({
-      email    : null,
-      password : null,
-    })
-    const errors    = reactive({
-      email    : null,
-      password : null,
-    })
+const client            = inject('client');
+const notify            = inject('notify');
+const cookies           = useCookies(['b2b_client_token','b2b_client_id', 'b2b_client_name'])
 
-    if (client.token && route.name === 'login') router.push({name  : 'client'});
+const updateData        = inject('updateData');
+const getBasket         = inject('getBasket');
 
-    function isValid(){
-      let valid = true;
-      if (!loginData.email)    {valid = false; errors.email    = 'Необходимо указать электронную почту!'};
-      if (!loginData.password) {valid = false; errors.password = 'Необходимо указать пароль!'};
-      return valid;
-    };
+const loading           = ref(false);
+const loginData         = reactive({
+  email    : 'kirpich@mail.ru',
+ // email    : null,
+ // password : null,
+  password : '123123',
+});
+const errors            = reactive({
+  email    : null,
+  password : null,
+});
 
-    async function toLogin() {
-      if (!isValid()) return;
-      loading.value = true;
-      let result = await loadJson('/b2b/client/login', {...loginData});
-      loading.value = false;
+if (myStorage.getItem('b2b_client_token') && route.name === 'login') router.push({name  : 'client'});
 
-      if (result.status === 'success' && result.authorisation && result.authorisation.token) {
-        client.id                      = result.client.id;
-        client.token                   = result.authorisation.token;
-        client.name                    = result.client.name;
-        client.inn                     = result.client.inn;
-        client.guid                    = result.client.guid;
-        client.subdivision             = result.client.subdivision;
-        client.ur_address              = result.client.ur_address;
-        client.count_trade_points      = result.client.count_trade_points;
-        client.revolving_credit        = result.client.revolving_credit;
-        client.single_credit           = result.client.single_credit;
-        client.update_date.statistic   = result.client.date_update_statistic ? moment(result.client.date_update_statistic) : moment('2023-01-01T00:00:00.000000Z');
-        client.update_date.treaties    = result.client.date_update_treaties  ? moment(result.client.date_update_treaties)  : moment('2023-01-01T00:00:00.000000Z');
-        client.update_date.dz          = result.client.date_update_dz        ? moment(result.client.date_update_dz)        : moment('2023-01-01T00:00:00.000000Z');
-        client.update_date.retro_bonus = result.client.date_update_rb        ? moment(result.client.date_update_rb)        : moment('2023-01-01T00:00:00.000000Z');
+function isValid(){
+  let valid = true;
+  if (!loginData.email)    {valid = false; errors.email    = 'Необходимо указать электронную почту!'};
+  if (!loginData.password) {valid = false; errors.password = 'Необходимо указать пароль!'};
+  return valid;
+};
 
-        client.trade_points.length = 0;
-        result.client.trade_points.forEach(el => client.trade_points.push(el));
+async function toLogin() {
+  if (!isValid()) return;
 
-        client.children.length = 0;
-        result.client.children.forEach(el => client.children.push(el));
+  try {
+    loading.value = true;
+    let result = await ClientRepo.login(loginData);
 
-        await myStorage.removeItem('b2b_client_token');
-        await myStorage.setItem('b2b_client_token', result.authorisation.token);
+    if(result.status == 200 && result.body.authorisation && result.body.authorisation.token) {
 
-        updateData();
+      client.id                      = result.body.client.id;
+      client.name                    = result.body.client.name;
+      client.inn                     = result.body.client.inn;
+      client.guid                    = result.body.client.guid;
+      client.subdivision             = result.body.client.subdivision;
+      client.ur_address              = result.body.client.ur_address;
+      client.count_trade_points      = result.body.client.count_trade_points;
+      client.revolving_credit        = result.body.client.revolving_credit;
+      client.single_credit           = result.body.client.single_credit;
+      client.update_date.statistic   = result.body.client.date_update_statistic ? moment(result.body.client.date_update_statistic) : moment('2023-01-01T00:00:00.000000Z');
+      client.update_date.treaties    = result.body.client.date_update_treaties  ? moment(result.body.client.date_update_treaties)  : moment('2023-01-01T00:00:00.000000Z');
+      client.update_date.dz          = result.body.client.date_update_dz        ? moment(result.body.client.date_update_dz)        : moment('2023-01-01T00:00:00.000000Z');
+      client.update_date.retro_bonus = result.body.client.date_update_rb        ? moment(result.body.client.date_update_rb)        : moment('2023-01-01T00:00:00.000000Z');
 
-        router.push({name: 'client'});
-        window.b2bShowOut();
+      client.trade_points.length = 0;
+      result.body.client.trade_points.forEach(el => client.trade_points.push(el));
 
-      } else {
-        notify('Ошибка авторизации', result.message, 'error');
-        router.push({name: 'login'});
-      }
-    };
+      client.children.length = 0;
+      result.body.client.children.forEach(el => client.children.push(el));
 
-    watchEffect(() => {
-      loginData.email    ? errors.email    = null : '';
-      loginData.password ? errors.password = null : '';
-    });
+      await myStorage.removeItem('b2b_client_token');
+      await myStorage.removeItem('b2b_client_id');
+      await myStorage.removeItem('b2b_client_name');
+      await myStorage.removeItem('b2b_discount');
 
-    return{
-      svg, loading, loginData, errors,
-      toLogin
+      cookies.set('b2b_client_token', result.body.authorisation.token, { path: '/' });
+      cookies.set('b2b_client_id',    result.body.client.id, { path: '/' });
+      cookies.set('b2b_client_name',  result.body.client.name, { path: '/' });
+
+      await myStorage.setItem('b2b_client_token', result.body.authorisation.token);
+      await myStorage.setItem('b2b_client_id',    result.body.client.id);
+      await myStorage.setItem('b2b_client_name',  result.body.client.name);
+      await myStorage.setItem('b2b_discount', '0');
+
+      await getBasket();
+      updateData();
+
+      if(window.b2bShowOut) window.b2bShowOut();
+      await router.push({name: 'client'});
+
+    } else {
+      notify({ title: 'Ошибка авторизации', message: e.message, type: 'error', duration: 5000 });
+    }
+
+  } catch (e) {
+    notify({ title: 'Ошибка авторизации', message: e.message, type: 'error', duration: 5000 });
+  } finally {
+    loading.value = false;
+  }
+
+};
+
+watchEffect(() => {
+  loginData.email    ? errors.email    = null : '';
+  loginData.password ? errors.password = null : '';
+});
+
+
+</script>
+
+<style scoped lang="scss">
+
+.b2b{
+  &-login{
+    &__row{
+      margin-bottom: 20px;
+    }
+    &__title{
+      padding-bottom: 25px;
+    }
+    &__label{
+      margin-bottom: 10px;
+    }
+    &__button{
+      width: 50%;
     }
   }
 }
-</script>
-
-<style scoped>
 
 </style>

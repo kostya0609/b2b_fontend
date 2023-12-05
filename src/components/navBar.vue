@@ -32,12 +32,10 @@ export default {
   name: "navBar",
   setup(){
 
-    const route             = useRoute();
-    const router            = useRouter();
-    const menu              = inject('menu');
-    const activeIndex       = ref(null);
-
-
+    const route       = useRoute();
+    const router      = useRouter();
+    const menu        = inject('menu');
+    const activeIndex = ref(null);
 
     menu.length = 0;
     router.getRoutes().forEach(el => {

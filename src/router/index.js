@@ -1,18 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Client        from '../pages/client'
-import Registration  from '../pages/client/registration'
-import Login         from '../pages/client/login'
-import Statistic     from '../pages/statistic'
-import Treaties      from '../pages/treaties'
-import Retro_bonus   from '../pages/retro_bonus'
-import Conditions    from '../pages/conditions'
-import Order_add     from '../pages/order/add'
-import Order_history from '../pages/order/history'
-const routes = [
+import Client        from '@/pages/client'
+import Registration  from '@/pages/client/registration'
+import Login         from '@/pages/client/login'
+import Statistic     from '@/pages/statistic'
+import Retro_bonus   from '@/pages/retro_bonus'
+import Conditions    from '@/pages/conditions'
+import Treaties      from '@/pages/treaties'
+import Order_add     from '@/pages/order/add'
+import Order_history from '@/pages/order/history'
 
+const routes = [
   {
     path: '/b2b/',
-    children : [
+    children: [
       {
         path: 'client',
         name: 'client',
@@ -37,12 +37,6 @@ const routes = [
         meta : {name : 'Статистика заказов', order : 2, onlyAdmin : false, auth : true, show : true},
       },
       {
-        path: 'treaties',
-        name: 'treaties',
-        component: Treaties,
-        meta : {name : 'Взаиморасчеты', order : 3, onlyAdmin : false, auth : true, show : true},
-      },
-      {
         path: 'retro_bonus',
         name: 'retro_bonus',
         component: Retro_bonus,
@@ -55,13 +49,19 @@ const routes = [
         meta : {name : 'Условия сотрудничества', order : 4, onlyAdmin : false, auth : true, show : true},
       },
       {
+        path: 'treaties',
+        name: 'treaties',
+        component: Treaties,
+        meta : {name : 'Взаиморасчеты', order : 3, onlyAdmin : false, auth : true, show : true},
+      },
+      {
         path: 'order/',
         children : [
           {
             path: 'add',
             name: 'order_add',
             component: Order_add,
-            meta : {name : 'Сформировать заказ', order : 5, onlyAdmin : false, auth : true, show : true},
+            meta : {name : 'Корзина', order : 5, onlyAdmin : false, auth : true, show : true},
           },
           {
             path: 'history',
@@ -72,9 +72,9 @@ const routes = [
         ],
       },
     ]
-  },
-]
+  }
 
+]
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
@@ -82,12 +82,9 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const myStorage = window.localStorage;
- // myStorage.removeItem('b2b_client_token');
-  let token = null;
+
   if(to.meta.auth){
-    myStorage.getItem('b2b_client_token') ? token = myStorage.getItem('b2b_client_token') : '';
-    if(!token) return next('/b2b/client/login');
+    if(!window.localStorage.getItem('b2b_client_token')) return next('/b2b/client/login');
   }
 
   !router.getRoutes().find(el => {return el.path === to.fullPath}) ? router.push({name : 'client'}) : '';

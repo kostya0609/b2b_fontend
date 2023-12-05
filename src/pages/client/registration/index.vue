@@ -1,160 +1,185 @@
 <template>
-  <div v-loading="loading"
-       element-loading-text="Загрузка данных..."
-       :element-loading-spinner="svg"
-       element-loading-svg-view-box="-10, -10, 50, 50"
-       class="route_page_container"
+  <pre-loader
+      class="b2b-registration"
+      :loading="loading"
   >
-    <h1 class="main-h1">Добавление пользователя</h1>
-    <el-row style="margin-bottom: 20px">
-      <el-col :span="12">
-        <label class="add-edit-label">
-          E-MAIL
-        </label>
+    <h1 class="b2b-registration__title b2b-title b2b-title_h1"> Добавление пользователя </h1>
+    <el-row class="b2b-row b2b-registration__row">
+      <el-col :md="12">
+        <label class="b2b-registration__label b2b-label"> E-MAIL </label>
         <el-input
           v-model="newUser.email"
-          :class="['add-edit-element', {'invalid' : errors.email}]"
+          :class="{'b2b-invalid' : errors.email}"
           placeholder="E-MAIL"
         >
         </el-input>
-        <small v-if="errors.email">{{errors.email}}</small>
+        <small
+            v-if="errors.email"
+            class="b2b-small"
+        >
+          {{errors.email}}
+        </small>
       </el-col>
     </el-row>
-    <el-row style="margin-bottom: 20px">
-      <el-col :span="12">
-        <label class="add-edit-label">
-          Пароль
-        </label>
+    <el-row class="b2b-row b2b-registration__row">
+      <el-col :md="12">
+        <label class="b2b-registration__label b2b-label"> Пароль </label>
         <el-input
             v-model="newUser.password"
             type="password"
-            :class="['add-edit-element', {'invalid' : errors.password}]"
+            :class="{'b2b-invalid' : errors.password}"
             placeholder="Пароль"
         >
         </el-input>
-        <small v-if="errors.password">{{errors.password}}</small>
+        <small
+            v-if="errors.password"
+            class="b2b-small"
+        >
+          {{errors.password}}
+        </small>
       </el-col>
     </el-row>
-    <el-row style="margin-bottom: 20px">
-      <el-col :span="12">
-        <label class="add-edit-label">
-          Наименование организации
-        </label>
+    <el-row class="b2b-row b2b-registration__row">
+      <el-col :md="12">
+        <label class="b2b-registration__label b2b-label"> Наименование организации </label>
         <el-input
             v-model="newUser.name"
-            :class="['add-edit-element', {'invalid' : errors.name}]"
+            :class="{'b2b-invalid' : errors.name}"
             placeholder="Наименование"
         >
         </el-input>
-        <small v-if="errors.name">{{errors.name}}</small>
+        <small
+            v-if="errors.name"
+            class="b2b-small"
+        >
+          {{errors.name}}
+        </small>
       </el-col>
     </el-row>
-    <el-row style="margin-bottom: 20px">
-      <el-col :span="12">
-        <label class="add-edit-label">
-          ИНН организации
-        </label>
+    <el-row class="b2b-row b2b-registration__row">
+      <el-col :md="12">
+        <label class="b2b-registration__label b2b-label"> ИНН организации </label>
         <el-input
             v-model="newUser.inn"
-            :class="['add-edit-element', {'invalid' : errors.inn}]"
+            :class="{'b2b-invalid' : errors.inn}"
             placeholder="ИНН"
         >
         </el-input>
-        <small v-if="errors.inn">{{errors.inn}}</small>
+        <small
+            v-if="errors.inn"
+            class="b2b-small"
+        >
+          {{errors.inn}}
+        </small>
       </el-col>
     </el-row>
-    <el-row style="margin-bottom: 20px">
-      <el-col :span="12">
-        <label class="add-edit-label">
-          КПП организации
-        </label>
+    <el-row class="b2b-row b2b-registration__row">
+      <el-col :md="12">
+        <label class="b2b-registration__label b2b-label"> КПП организации </label>
         <el-input
             v-model="newUser.kpp"
-            :class="['add-edit-element']"
             placeholder="КПП"
         >
         </el-input>
       </el-col>
     </el-row>
-    <el-row>
-      <el-col :span="12" align="right">
+    <el-row class="b2b-row">
+      <el-col :md="12">
         <el-button
             type="primary"
             @click="saveUser"
-            style="width: 50%; background: #EF7C00; border-color: #EF7C00; color: white"
+            class="b2b-registration__button"
         >
           Добавить аккаунт
         </el-button>
       </el-col>
     </el-row>
 
-  </div>
+  </pre-loader>
 </template>
 
-<script>
+<script setup>
 import {ref, reactive, inject, watchEffect} from "vue";
-export default {
-  name: "client_registration_page",
-  setup(){
-    const loadJson       = inject('loadJson');
-    const svg            = inject('svg');
-    const notify         = inject('notify');
+import PreLoader from "@/components/pre_loader";
+import {ClientRepo} from "@/repositories"
 
-    const loading        = ref(false);
+const loadJson       = inject('loadJson');
+const svg            = inject('svg');
+const notify         = inject('notify');
 
-    const newUser = reactive({
-      email    : '',
-      password : '',
-      inn      : '',
-      kpp      : '',
-      name     : '',
-    })
-    const errors  = reactive({
-      email    : null,
-      password : null,
-      inn      : null,
-      name     : null,
-    })
+const loading        = ref(false);
 
-    function isValid(){
-      let valid = true;
-      if (!newUser.email)                                   {valid = false; errors.email    = 'Необходимо указать электронную почту!'};
-      if (!newUser.password || newUser.password.length < 6) {valid = false; errors.password = 'Необходимо указать пароль не менее 6 символов!'};
-      if (!newUser.inn)                                     {valid = false; errors.inn      = 'Необходимо указать ИНН организации!'};
-      if (!newUser.name)                                    {valid = false; errors.name     = 'Необходимо указать Наименование организации!'};
-      return valid;
-    };
+const newUser = reactive({
+  email    : '',
+  password : '',
+  inn      : '',
+  kpp      : '',
+  name     : '',
+})
+const errors  = reactive({
+  email    : null,
+  password : null,
+  inn      : null,
+  name     : null,
+})
 
-    async function saveUser(){
-      if(!isValid()) return;
-      loading.value = true;
-      let result = await loadJson('/b2b/client/register', {...newUser});
-      if (result.status === 'success') {
-        newUser.email    = '';
-        newUser.password = '';
-        newUser.inn      = '';
-        newUser.kpp      = '';
-        newUser.name     = '';
-      };
-      notify('Добавление пользователя', result.message, result.status);
-      loading.value = false;
-    };
+function isValid(){
+  let valid = true;
+  if (!newUser.email)                                   {valid = false; errors.email    = 'Необходимо указать электронную почту!'};
+  if (!newUser.password || newUser.password.length < 6) {valid = false; errors.password = 'Необходимо указать пароль не менее 6 символов!'};
+  if (!newUser.inn)                                     {valid = false; errors.inn      = 'Необходимо указать ИНН организации!'};
+  if (!newUser.name)                                    {valid = false; errors.name     = 'Необходимо указать Наименование организации!'};
+  return valid;
+};
 
-    watchEffect(() => {
-      newUser.email    ? errors.email    = null : '';
-      newUser.password ? errors.password = null : '';
-      newUser.inn      ? errors.inn      = null : '';
-      newUser.name     ? errors.name     = null : '';
-    });
+async function saveUser(){
+  if(!isValid()) return;
+  try {
+    loading.value = true;
+    let result = await ClientRepo.register(newUser);
 
-    return{
-      newUser, errors, loading, svg,
-      saveUser
+    if(result.status == 200 ) {
+      newUser.email    = '';
+      newUser.password = '';
+      newUser.inn      = '';
+      newUser.kpp      = '';
+      newUser.name     = '';
+    }
+    notify({ title: 'Добавление пользователя', message: '', type: 'success'});
+  } catch (e) {
+    notify({ title: 'Ошибка добавление пользователя', message: e.message, type: 'error', duration: 5000 });
+  } finally {
+    loading.value = false;
+  }
+};
+
+watchEffect(() => {
+  newUser.email    ? errors.email    = null : '';
+  newUser.password ? errors.password = null : '';
+  newUser.inn      ? errors.inn      = null : '';
+  newUser.name     ? errors.name     = null : '';
+});
+
+
+</script>
+
+<style scoped lang="scss">
+
+.b2b{
+  &-registration{
+    &__row{
+      margin-bottom: 20px;
+    }
+    &__title{
+      padding-bottom: 25px;
+    }
+    &__label{
+      margin-bottom: 10px;
+    }
+    &__button{
+      width: 50%;
     }
   }
 }
-</script>
-
-<style scoped>
 
 </style>
